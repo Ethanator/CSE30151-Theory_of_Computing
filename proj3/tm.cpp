@@ -4,36 +4,12 @@
 //
 //   Author: Yuxuan "Ethan" Chen
 //     Date: Tuesday, April 21, 2015
-//
-// Checklist for features:
-//
-// [√] If the input alphabet contains symbols that are not exactly one 
-//     character long, then halt
-// [√] If the input alphabet contains the blank character, then halt
-// [√] If the tape alphabet contains symbols that are not exactly one
-//     character long, then halt
-// [√] If the tape alphabet does not contain the input alphabet or the blank
-//     character, then halt
-// [√] If any transition has invalid states, tape characters, or directions,
-//     then halt
-// [√] If there are two transition rules with the same starting states and the
-//     same current tape symbol, halt
-// [√] If the start state is an invalid state, then halt
-// [√] If there are not exactly two final states, then halt
-// [√] If the final states are the same or any of the final states are not 
-//     valid, halt
-// [√] If there is no transition for one config, it should go to the reject
-//     state and the tape head shifts right without changing the tape
-// [√] If the tape head is at the leftmost position, it cannot move left
-// [√] If the simulator runs for 1000 transitions and still does not halt,
-//     print DID NOT HALT
 
 
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <stack>
 #include <string>
 #include <utility>
 #include <vector>
@@ -280,6 +256,8 @@ int main(int argc, char** argv) {
 		if (isFirstCase) { isFirstCase = false; } else { cout << endl; }
 		getline(cin, line);
 		vector<string> input = splitStringByDelimiter(line, ',');
+		// if input line is empty, then initialize the input vector with
+		// a blank character
 		simTM(transitions, start, end[0], end[1], input);
 	}
 }
