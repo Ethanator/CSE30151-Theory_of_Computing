@@ -19,12 +19,15 @@
 // [√] If there are two transition rules with the same starting states and the
 //     same current tape symbol, halt
 // [√] If the start state is an invalid state, then halt
-// [] If there are not exactly two final states, then halt
-// [] If the final states are the same or any of the final states are not 
+// [√] If there are not exactly two final states, then halt
+// [√] If the final states are the same or any of the final states are not 
 //     valid, halt
-// [] If there is no transition rule for one config, it should go to the reject state, does not change the tape, and moves right
-// [] If the tape head is at the leftmost position, it cannot move left anymore
-// [] If the simulator runs for 1000 transitions and still does not halt, print DID NOT HALT
+// [√] If there is no transition for one config, it should go to the reject
+//     state and the tape head shifts right without changing the tape
+// [√] If the tape head is at the leftmost position, it cannot move left
+// [√] If the simulator runs for 1000 transitions and still does not halt,
+//     print DID NOT HALT
+
 
 #include <algorithm>
 #include <fstream>
@@ -36,106 +39,63 @@
 #include <vector>
 using namespace std;
 
-/*
-// check if a transition can be allowed in an existing list of transitions
-bool isNewTransitionValid(map<string, map<pair<string, string>, pair<string, string> > > transitions, vector<string> transition) {
-	if (!transitions[transition[0]].size()) return true;
-	if (transition[1] == "e" && transition[2] == "e") return false;
-	map<pair<string, string>, pair<string, string> > tmpMap = transitions[transition[0]];
-	if (tmpMap.count(make_pair("e", "e"))) return false;
-	if (tmpMap.count(make_pair(transition[1], transition[2]))) return false;
-	if (transition[1] != "e" && transition[2] != "e") {
-		return !(tmpMap.count(make_pair("e", transition[2])) || tmpMap.count(make_pair(transition[1], "e")));
-	}
-	for (map<pair<string, string>, pair<string, string> >::const_iterator it = tmpMap.begin(); it != tmpMap.end(); ++it) {
-		if ((transition[1] == "e" && (it->first.second == "e" || (transition[2] == it->first.second && it->first.first != "e"))) ||
-			(transition[2] == "e" && (it->first.first == "e"  || (transition[1] == it->first.first  && it->first.second != "e"))))
-		return false;
-	}
-	return true;
-}
-
-// print the elements of a stack from the top to the bottom followed by a newline character
-void printStack(stack<string> s) {
-	if (!s.empty()) {
-		cout << " " << s.top();
-		s.pop();
-		while (!s.empty()) {
-			cout << "," << s.top();
-			s.pop();
-		}
-	}
-	cout << endl;
-}
-
-// assume the input is empty string and see how far we can go in the DPDA
-// the didInputFinish variable is basically a switch. when it's true, we will check if the current state is an accept state and stop accordingly
-void reachOutWithEmptyStringInput(string & curr_state,
-	stack<string> & curr_stack, map<string, map<pair<string, string>,
-	pair<string, string> > > transitions, vector<string> end, 
-	bool didInputFinish = false) {
-	while (transitions[curr_state].count(make_pair("e", "e")) || 
-		  (!curr_stack.empty() && transitions[curr_state].count(make_pair("e", curr_stack.top())))) {
-		if (transitions[curr_state].count(make_pair("e", "e"))) {
-			cout << curr_state << "; e; e; " << transitions[curr_state][make_pair("e", "e")].first << ";";
-			string newElem = transitions[curr_state][make_pair("e", "e")].second;
-			if (newElem != "e") curr_stack.push(newElem);
-			curr_state = transitions[curr_state][make_pair("e", "e")].first;
-		} else {
-			string stackTop = curr_stack.top();
-			cout << curr_state << "; e; " << stackTop << "; " << transitions[curr_state][make_pair("e", stackTop)].first << ";";
-			curr_stack.pop();
-			string newElem = transitions[curr_state][make_pair("e", stackTop)].second;
-			if (newElem != "e") curr_stack.push(newElem);
-			curr_state = transitions[curr_state][make_pair("e", stackTop)].first;
-        }
-		printStack(curr_stack);
-		if (didInputFinish && isInList(curr_state, end)) {
-			cout << "ACCEPT" << endl;
-			return;
-		}
-	}
-	if (didInputFinish) cout << "REJECT" << endl;
-}
-
-// meat of the DPDA analyses
-void analyzeDPDA(map<string, map<pair<string, string>, pair<string, string> > > transitions, string start, vector<string> end, vector<string> input) {
-	string curr_state = start;
-	stack<string> curr_stack;
-	reachOutWithEmptyStringInput(curr_state, curr_stack, transitions, end);
-
-	for (int i = 0; i < input.size(); ++i) {
-		if (transitions[curr_state].count(make_pair(input[i], "e"))) {
-			cout << curr_state << "; " << input[i] << "; e; " << transitions[curr_state][make_pair(input[i], "e")].first << ";";
-			string newElem = transitions[curr_state][make_pair(input[i], "e")].second;
-			if (newElem != "e") curr_stack.push(newElem);
-			curr_state = transitions[curr_state][make_pair(input[i], "e")].first;
-		} else if (!curr_stack.empty() && transitions[curr_state].count(make_pair(input[i], curr_stack.top()))) {
-			string stackTop = curr_stack.top();
-			cout << curr_state << "; " << input[i] << "; " << stackTop << "; " << transitions[curr_state][make_pair(input[i], stackTop)].first << ";";
-			curr_stack.pop();
-			string newElem = transitions[curr_state][make_pair(input[i], stackTop)].second;
-			if (newElem != "e") curr_stack.push(newElem);
-			curr_state = transitions[curr_state][make_pair(input[i], stackTop)].first;
-		} else {
-			cout << "REJECT" << endl;
-			return;
-		}
-		printStack(curr_stack);
-		if (i != input.size() - 1) {
-			reachOutWithEmptyStringInput(curr_state, curr_stack, transitions, end);
-			continue;
-		}
-		reachOutWithEmptyStringInput(curr_state, curr_stack, transitions, end, true);
-	}
-}
-*/
-
 
 // check if an item is in a container
 template <typename T>
 bool isInList(const T x, vector<T> l) {
 	return (find(l.begin(), l.end(), x) != l.end());
+}
+
+
+// print the configuration of the Turing Machine
+void printConfig(string state, vector<string> &input, unsigned long long i) {
+	unsigned long long rightmost_nonzero_ind = input.size() - 1;
+	while (input[rightmost_nonzero_ind] == " ") { --rightmost_nonzero_ind; }
+	cout << "(";
+	bool isFirstChar = true;
+	for (int j = 0; j < i; ++j) {
+		if (isFirstChar) { isFirstChar = false; } else { cout << ","; }
+		cout << ((j < input.size()) ? input[j] : " ");
+	}
+	cout << ")" << state << "(";
+	isFirstChar = true;
+	for (int j = i; j <= rightmost_nonzero_ind; ++j) {
+		if (isFirstChar) { isFirstChar = false; } else { cout << ","; }
+		cout << input[j];
+	}
+	cout << ")" << endl;
+}
+
+
+// meat of the TM simulation
+void simTM(map<pair<string, string>, pair<pair<string, string>, string> > t,
+	string start, string accept, string reject, vector<string> input) {
+	int MAX_ROUNDS = 1000;
+	string curr_state = start;
+	unsigned long long tape_head = 0;
+	while (curr_state != accept && curr_state != reject && MAX_ROUNDS--) {
+		printConfig(curr_state, input, tape_head);
+		pair<string, string> key = make_pair(curr_state, input[tape_head]);
+		if (!t.count(key)) {
+			curr_state = reject;
+			++tape_head;
+			break;
+		}
+		curr_state = t[key].first.first;
+		input[tape_head] = t[key].first.second;
+		if (t[key].second == "L") {
+			tape_head = (!tape_head) ? 0 : (tape_head - 1);
+		} else {
+			++tape_head;
+			if (tape_head == input.size()) {
+				input.push_back(" ");
+			}
+		}
+	}	
+	printConfig(curr_state, input, tape_head);
+	if (curr_state == accept) { cout << "ACCEPT" << endl; }
+	else if (curr_state == reject) { cout << "REJECT" << endl; }
+	else { cout << "DID NOT HALT" << endl; } 
 }
 
 
@@ -158,9 +118,9 @@ vector<string> splitStringByDelimiter(string s, char delim) {
 bool isTransitionValid(vector<string> t, vector<string> states,
 	vector<string> tapealpha) {
 	return (t.size() == 5 && 
-		isInList(t[0], states) && 
+		isInList(t[0],    states) && 
 		isInList(t[1], tapealpha) && 
-		isInList(t[2], states) && 
+		isInList(t[2],    states) && 
 		isInList(t[3], tapealpha) &&
 		(t[4] == "L" || t[4] == "R"));
 }
@@ -309,8 +269,9 @@ int main(int argc, char** argv) {
 		cout << "Accept and reject states must be different." << endl;
 		exit(1);
 	}
-	/*
-	// read user input and output results
+
+
+	// read user input and compute results
 	int numOfCases = 0;
 	cin >> numOfCases;
 	getline(cin, line);
@@ -319,7 +280,6 @@ int main(int argc, char** argv) {
 		if (isFirstCase) { isFirstCase = false; } else { cout << endl; }
 		getline(cin, line);
 		vector<string> input = splitStringByDelimiter(line, ',');
-		analyzeDPDA(transitions, start, end, input);
+		simTM(transitions, start, end[0], end[1], input);
 	}
-	*/
 }
